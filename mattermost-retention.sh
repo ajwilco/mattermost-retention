@@ -13,17 +13,15 @@ DATA_PATH="/mattermost/data/"
 delete_before=$(date  --date="$RETENTION day ago"  "+%s%3N")
 #delete_before=$(date  "+%s%3N")
 echo $(date  --date="$RETENTION day ago")
-# run psql command do delete posts older than RETENTION var
-export PGPASSWORD=$DB_PASS
 
 # get list of files to be removed
-psql -h "$DB_HOST" -U"$DB_USER" "$DB_NAME" -t -c "select path from fileinfo where createat < $delete_before;" > /tmp/mattermost-paths.list
-psql -h "$DB_HOST" -U"$DB_USER" "$DB_NAME" -t -c "select thumbnailpath from fileinfo where createat < $delete_before;" >> /tmp/mattermost-paths.list
-psql -h "$DB_HOST" -U"$DB_USER" "$DB_NAME" -t -c "select previewpath from fileinfo where createat < $delete_before;" >> /tmp/mattermost-paths.list
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT Path FROM FileInfo WHERE CreateAt < '$delete_before';" > /tmp/mattermost-paths.list
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT ThumbnailPath from FileInfo WHERE CreateAt < '$delete_before';" >> /tmp/mattermost-paths.list
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "SELECT PreviewPath from FileInfo WHERE CreateAt < '$delete_before';" >> /tmp/mattermost-paths.list
 
 # cleanup db 
-psql -h "$DB_HOST" -U"$DB_USER" "$DB_NAME" -t -c "delete from posts where createat < $delete_before;"
-psql -h "$DB_HOST" -U"$DB_USER" "$DB_NAME" -t -c "delete from fileinfo where createat < $delete_before;"
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "DELETE FROM Posts WHERE CreateAt < '$delete_before';"
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -e "DELETE FROM FileInfo WHERE CreateAt < '$delete_before';"
 
 # delete files
 while read -r fp; do
